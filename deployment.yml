@@ -1,0 +1,98 @@
+- name: Install docker
+  gather_facts: false
+  hosts: test
+
+  tasks:
+    - name: Install yum utils
+      yum:
+        name: yum-utils
+        state: latest
+
+    - name: Install device-mapper-persistent-data
+      yum:
+        name: device-mapper-persistent-data
+        state: latest
+
+    - name: Install lvm2
+      yum:
+        name: lvm2
+        state: latest
+
+    - name: Add Docker repo
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+      become: yes
+
+    - name: Install Docker
+      package:
+        name: docker-ce
+        state: latest
+      become: yes
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      become: yes
+
+    - name: Install docker-py
+      package:
+        name: python-docker-py
+        state: latest
+      become: yes
+
+    - name: Create a network
+      docker_network:
+        name: web_net
+        state: present
+
+    - name: Create a volume
+      docker_volume:
+        volume_name: web_volume
+        driver_options:
+          type: ext4
+          device: /data/web_volume
+        state: present
+
+    - name: Create a volume
+      docker_volume:
+        name: db_volume
+        driver_options:
+          type: ext4
+          device: /data/db_volume
+        state: present
+
+    - name: upload the site directory to the docker host
+      copy: src=/tmp/Dockerfile dest=/tmp/Dockerfile
+
+    - name: Build Docker image from Dockerfile
+      docker_image:
+        name: gopac/first_web
+        path: /tmp
+        state: present
+
+    - name: Running Web container
+      docker_container:
+        name: webnode
+        networks:
+          - name: web_net
+        volumes:
+          - /data:/data/web_volume
+        image: gopac/first_web:latest
+        published_ports: 3000:3000
+        state: started
+        detach: yes
+
+    - name: Running DB container
+      docker_container:
+        name: dbnode
+        networks:
+          - name: web_net
+        volumes:
+          - /data:/data/db_volume
+        image: couchdb:latest
+        published_ports: 5984:5984
+        state: started
+        detach: yes
