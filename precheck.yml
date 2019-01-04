@@ -1,0 +1,12 @@
+- name: Ping Precheck
+  gather_facts: false
+  hosts: test
+  tasks:
+    - ping:
+    - wait_for:
+        port: "{{ item }}"
+        state: started         # Port should be open
+        delay: 0               # No wait before first check (sec)
+        timeout: 3             # Stop checking after timeout (sec)
+      with_items:
+        - 22
