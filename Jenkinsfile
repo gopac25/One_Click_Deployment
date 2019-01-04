@@ -13,4 +13,5 @@ node {
         ansible-playbook -i invendeploy.txt postcheck.yml
         }
     stage('notify') { 
-   } 
+   }
+}
