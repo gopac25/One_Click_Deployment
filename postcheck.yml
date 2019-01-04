@@ -1,0 +1,13 @@
+- name: postcheck
+  gather_facts: false
+  hosts: test
+
+  tasks:
+    - name: Url is working
+      uri:
+        url: "http://192.168.40.82:3000/#!/"
+        method: GET
+        return_content: yes
+
+    - name: Container status
+      command: docker ps
